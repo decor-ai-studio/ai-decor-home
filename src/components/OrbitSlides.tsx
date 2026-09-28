@@ -45,6 +45,7 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
   const sheenRefs = useRef<(HTMLDivElement | null)[]>([]);
   const selectedRef = useRef<number | null>(null);
   const turnRef = useRef<((direction: number) => void) | null>(null);
+  const dragDistanceRef = useRef(0);
   const [selected, setSelected] = useState<number | null>(null);
   const n = slides.length;
 
@@ -70,7 +71,6 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
     let angle = 0;
     let speed = 1; // eases to 0 while the pointer hovers the stage
     let target = 1;
-    let angleTarget = 0;
     let time = 0;
     let last = performance.now();
     let raf = 0;
@@ -82,7 +82,6 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
     let dragging = false;
     let dragStartX = 0;
     let dragLastX = 0;
-    let dragDistance = 0;
 
     const layout = () => {
       W = stage.clientWidth;
@@ -173,7 +172,6 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
       time += dt;
       speed += (target - speed) * Math.min(1, dt * 4);
       angle += (dt * speed * Math.PI * 2) / period;
-      angle += (angleTarget - angle) * Math.min(1, dt * 9);
       pointerTiltX += (pointerX - pointerTiltX) * Math.min(1, dt * 8);
       pointerTiltY += (pointerY - pointerTiltY) * Math.min(1, dt * 8);
       if (visible) draw();
@@ -189,10 +187,7 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
     });
     ro.observe(stage);
 
-    if (reduce) {
-      // no motion for people who asked for less of it: keep a single static frame
-      return () => ro.disconnect();
-    }
+    if (reduce) target = 0;
 
     const io = new IntersectionObserver(([entry]) => {
       visible = !!entry?.isIntersecting;
@@ -206,8 +201,8 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
       if (dragging) {
         const delta = event.clientX - dragLastX;
         dragLastX = event.clientX;
-        dragDistance += Math.abs(delta);
-        angleTarget += delta * 0.006;
+        dragDistanceRef.current += Math.abs(delta);
+        angle += delta * 0.006;
       }
     };
     const onPointerDown = (event: PointerEvent) => {
@@ -215,13 +210,13 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
       dragging = true;
       dragStartX = event.clientX;
       dragLastX = event.clientX;
-      dragDistance = 0;
+      dragDistanceRef.current = 0;
       target = 0;
       stage.setPointerCapture(event.pointerId);
     };
     const onPointerUp = (event: PointerEvent) => {
       dragging = false;
-      dragDistance += Math.abs(event.clientX - dragStartX);
+      dragDistanceRef.current += Math.abs(event.clientX - dragStartX);
       if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
       target = selectedRef.current === null ? 1 : 0;
     };
@@ -243,7 +238,7 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
       const current = selectedRef.current ?? 0;
       const next = (current + direction + n) % n;
       selectSlide(next);
-      angleTarget += direction * ((Math.PI * 2) / n);
+      angle += direction * ((Math.PI * 2) / n);
       target = 0;
     };
     stage.addEventListener("pointerenter", onEnter);
@@ -319,7 +314,7 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
             aria-label={`${s.title} — اضغط للتكبير`}
             aria-pressed={selected === i}
             onClick={() => {
-              if (dragDistance > 8) return;
+              if (dragDistanceRef.current > 8) return;
               selectSlide(selected === i ? null : i);
             }}
             onKeyDown={(event) => {
