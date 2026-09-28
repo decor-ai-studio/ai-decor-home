@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
-import { Boxes, Film, type LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Boxes, ChevronLeft, ChevronRight, Film, X, type LucideIcon } from "lucide-react";
 import claddingA from "@/assets/materials-cladding-a.jpg";
 import claddingB from "@/assets/materials-cladding-b.jpg";
 import signageA from "@/assets/materials-signage-a.jpg";
 import signageB from "@/assets/materials-signage-b.jpg";
+import { Button } from "@/components/ui/button";
 
 // Motion system for the landing page: slides "fly" around an invisible circle,
 // each one bobbing in the air while its shadow slides over the floor below it.
@@ -42,7 +43,20 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const shadowRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sheenRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const selectedRef = useRef<number | null>(null);
+  const turnRef = useRef<((direction: number) => void) | null>(null);
+  const dragDistanceRef = useRef(0);
+  const [selected, setSelected] = useState<number | null>(null);
   const n = slides.length;
+
+  const selectSlide = useCallback((index: number | null) => {
+    selectedRef.current = index;
+    setSelected(index);
+  }, []);
+
+  const turn = useCallback((direction: number) => {
+    turnRef.current?.(direction);
+  }, []);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -61,6 +75,13 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
     let last = performance.now();
     let raf = 0;
     let visible = true;
+    let pointerX = 0;
+    let pointerY = 0;
+    let pointerTiltX = 0;
+    let pointerTiltY = 0;
+    let dragging = false;
+    let dragStartX = 0;
+    let dragLastX = 0;
 
     const layout = () => {
       W = stage.clientWidth;
@@ -105,11 +126,26 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
 
         const card = cardRefs.current[i];
         if (card) {
-          card.style.transform =
-            `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) ` +
-            `rotateY(${-s * 24}deg) rotateZ(${s * 2.5 + Math.sin(time * 0.9 + i) * 0.8}deg) scale(${scale})`;
-          card.style.zIndex = String(10 + Math.round(d * 100));
-          card.style.filter = `brightness(${0.62 + 0.38 * d})`;
+          const active = selectedRef.current === i;
+          const hasSelection = selectedRef.current !== null;
+          if (active) {
+            const focusScale = Math.min(1.55, Math.max(1.12, W / (cw * 2.15)));
+            card.style.transform =
+              `translate3d(${W / 2 + pointerTiltX * 10}px, ${H * 0.46 + pointerTiltY * 7}px, 0) translate(-50%, -50%) ` +
+              `rotateX(${-pointerTiltY * 5}deg) rotateY(${pointerTiltX * 7}deg) scale(${focusScale})`;
+            card.style.zIndex = "220";
+            card.style.filter = "brightness(1.08) saturate(1.08)";
+            card.style.opacity = "1";
+          } else {
+            card.style.transform =
+              `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) ` +
+              `rotateY(${-s * 24}deg) rotateZ(${s * 2.5 + Math.sin(time * 0.9 + i) * 0.8}deg) scale(${scale})`;
+            card.style.zIndex = String(10 + Math.round(d * 100));
+            card.style.filter = hasSelection
+              ? `blur(7px) brightness(${0.38 + 0.18 * d}) saturate(0.6)`
+              : `brightness(${0.62 + 0.38 * d})`;
+            card.style.opacity = hasSelection ? "0.38" : "1";
+          }
         }
 
         const sheen = sheenRefs.current[i];
@@ -123,7 +159,9 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
           const sx = x + 14 * scale; // light comes from the upper left
           shadow.style.transform =
             `translate3d(${sx}px, ${floorY}px, 0) translate(-50%, -50%) scale(${scale * (1 - 0.18 * lift)}, ${scale * (1 - 0.1 * lift)})`;
-          shadow.style.opacity = String((0.3 + 0.4 * d) * (1 - 0.35 * lift));
+          shadow.style.opacity = selectedRef.current !== null
+            ? "0.06"
+            : String((0.3 + 0.4 * d) * (1 - 0.35 * lift));
         }
       }
     };
@@ -134,6 +172,8 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
       time += dt;
       speed += (target - speed) * Math.min(1, dt * 4);
       angle += (dt * speed * Math.PI * 2) / period;
+      pointerTiltX += (pointerX - pointerTiltX) * Math.min(1, dt * 8);
+      pointerTiltY += (pointerY - pointerTiltY) * Math.min(1, dt * 8);
       if (visible) draw();
       raf = requestAnimationFrame(frame);
     };
@@ -147,20 +187,66 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
     });
     ro.observe(stage);
 
-    if (reduce) {
-      // no motion for people who asked for less of it: keep a single static frame
-      return () => ro.disconnect();
-    }
+    if (reduce) target = 0;
 
     const io = new IntersectionObserver(([entry]) => {
       visible = !!entry?.isIntersecting;
     });
     io.observe(stage);
 
+    const onPointerMove = (event: PointerEvent) => {
+      const bounds = stage.getBoundingClientRect();
+      pointerX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
+      pointerY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+      if (dragging) {
+        const delta = event.clientX - dragLastX;
+        dragLastX = event.clientX;
+        dragDistanceRef.current += Math.abs(delta);
+        angle += delta * 0.006;
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if ((event.target as HTMLElement).closest("button")) return;
+      dragging = true;
+      dragStartX = event.clientX;
+      dragLastX = event.clientX;
+      dragDistanceRef.current = 0;
+      target = 0;
+      stage.setPointerCapture(event.pointerId);
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      dragging = false;
+      dragDistanceRef.current += Math.abs(event.clientX - dragStartX);
+      if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+      target = selectedRef.current === null ? 1 : 0;
+    };
     const onEnter = () => (target = 0);
-    const onLeave = () => (target = 1);
+    const onLeave = () => {
+      dragging = false;
+      pointerX = 0;
+      pointerY = 0;
+      target = selectedRef.current === null ? 1 : 0;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (selectedRef.current === null) return;
+      if (event.key === "Escape") selectSlide(null);
+      if (event.key === "ArrowLeft") turnRef.current?.(-1);
+      if (event.key === "ArrowRight") turnRef.current?.(1);
+    };
+    turnRef.current = (direction: number) => {
+      if (n === 0) return;
+      const current = selectedRef.current ?? 0;
+      const next = (current + direction + n) % n;
+      selectSlide(next);
+      angle += direction * ((Math.PI * 2) / n);
+      target = 0;
+    };
     stage.addEventListener("pointerenter", onEnter);
     stage.addEventListener("pointerleave", onLeave);
+    stage.addEventListener("pointermove", onPointerMove);
+    stage.addEventListener("pointerdown", onPointerDown);
+    stage.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("keydown", onKeyDown);
 
     raf = requestAnimationFrame(frame);
     return () => {
@@ -169,16 +255,21 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
       io.disconnect();
       stage.removeEventListener("pointerenter", onEnter);
       stage.removeEventListener("pointerleave", onLeave);
+      stage.removeEventListener("pointermove", onPointerMove);
+      stage.removeEventListener("pointerdown", onPointerDown);
+      stage.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("keydown", onKeyDown);
+      turnRef.current = null;
     };
-  }, [n, period]);
+  }, [n, period, selectSlide]);
 
   return (
     <div
       ref={stageRef}
       role="region"
       aria-label="عرض شرائح متحرك لمميزات المنصة"
-      className={`relative w-full mx-auto select-none ${className}`}
-      style={{ height: "clamp(280px, 42vw, 420px)", perspective: "1200px" }}
+      className={`relative w-full mx-auto select-none touch-pan-y ${selected !== null ? "cursor-zoom-out" : "cursor-grab active:cursor-grabbing"} ${className}`}
+      style={{ height: "clamp(300px, 42vw, 420px)", perspective: "1200px" }}
       dir="ltr"
     >
       {/* floor + orbit path */}
@@ -218,8 +309,24 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
             ref={(el) => {
               cardRefs.current[i] = el;
             }}
-            className="absolute left-0 top-0 rounded-2xl overflow-hidden border border-white/10 bg-slate-900 shadow-2xl"
-            style={{ willChange: "transform, filter" }}
+            role="button"
+            tabIndex={0}
+            aria-label={`${s.title} — اضغط للتكبير`}
+            aria-pressed={selected === i}
+            onClick={() => {
+              if (dragDistanceRef.current > 8) return;
+              selectSlide(selected === i ? null : i);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectSlide(selected === i ? null : i);
+              }
+            }}
+            className={`absolute left-0 top-0 overflow-hidden rounded-2xl border bg-slate-900 shadow-2xl outline-none transition-[border-color,box-shadow,opacity] duration-300 focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+              selected === i ? "border-emerald-400/70 shadow-emerald-500/30" : "border-white/10"
+            }`}
+            style={{ willChange: "transform, filter, opacity" }}
             dir="rtl"
           >
             {s.src ? (
@@ -249,6 +356,44 @@ export default function OrbitSlides({ slides = DEFAULT_SLIDES, period = 30, clas
           </div>
         );
       })}
+
+      {selected !== null && (
+        <>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            aria-label="الصورة السابقة"
+            title="الصورة السابقة"
+            onClick={() => turn(-1)}
+            className="absolute left-2 sm:left-5 top-1/2 z-[260] h-11 w-11 -translate-y-1/2 rounded-full border border-white/15 bg-slate-900/85 text-white shadow-xl backdrop-blur-md hover:bg-slate-800"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            aria-label="الصورة التالية"
+            title="الصورة التالية"
+            onClick={() => turn(1)}
+            className="absolute right-2 sm:right-5 top-1/2 z-[260] h-11 w-11 -translate-y-1/2 rounded-full border border-white/15 bg-slate-900/85 text-white shadow-xl backdrop-blur-md hover:bg-slate-800"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            aria-label="إغلاق الصورة المكبرة"
+            title="إغلاق"
+            onClick={() => selectSlide(null)}
+            className="absolute right-2 sm:right-5 top-3 z-[260] h-9 w-9 rounded-full border border-white/15 bg-slate-900/85 text-white shadow-xl backdrop-blur-md hover:bg-slate-800"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </>
+      )}
     </div>
   );
 }
