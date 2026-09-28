@@ -10,33 +10,141 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiAnalyzeSceneRouteImport } from './routes/api/analyze-scene'
+import { Route as ApiBuildSequenceRouteImport } from './routes/api/build-sequence'
+import { Route as ApiEditImageRouteImport } from './routes/api/edit-image'
+import { Route as ApiGenerateImageRouteImport } from './routes/api/generate-image'
+import { Route as ApiGenerateVideoRouteImport } from './routes/api/generate-video'
+import { Route as ApiReviseDesignRouteImport } from './routes/api/revise-design'
+import { Route as ApiVideoFileIdRouteImport } from './routes/api/video-file.$id'
+import { Route as ApiVideoStatusIdRouteImport } from './routes/api/video-status.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAnalyzeSceneRoute = ApiAnalyzeSceneRouteImport.update({
+  id: '/api/analyze-scene',
+  path: '/api/analyze-scene',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBuildSequenceRoute = ApiBuildSequenceRouteImport.update({
+  id: '/api/build-sequence',
+  path: '/api/build-sequence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEditImageRoute = ApiEditImageRouteImport.update({
+  id: '/api/edit-image',
+  path: '/api/edit-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateImageRoute = ApiGenerateImageRouteImport.update({
+  id: '/api/generate-image',
+  path: '/api/generate-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateVideoRoute = ApiGenerateVideoRouteImport.update({
+  id: '/api/generate-video',
+  path: '/api/generate-video',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReviseDesignRoute = ApiReviseDesignRouteImport.update({
+  id: '/api/revise-design',
+  path: '/api/revise-design',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVideoFileIdRoute = ApiVideoFileIdRouteImport.update({
+  id: '/api/video-file/$id',
+  path: '/api/video-file/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVideoStatusIdRoute = ApiVideoStatusIdRouteImport.update({
+  id: '/api/video-status/$id',
+  path: '/api/video-status/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/analyze-scene': typeof ApiAnalyzeSceneRoute
+  '/api/build-sequence': typeof ApiBuildSequenceRoute
+  '/api/edit-image': typeof ApiEditImageRoute
+  '/api/generate-image': typeof ApiGenerateImageRoute
+  '/api/generate-video': typeof ApiGenerateVideoRoute
+  '/api/revise-design': typeof ApiReviseDesignRoute
+  '/api/video-file/$id': typeof ApiVideoFileIdRoute
+  '/api/video-status/$id': typeof ApiVideoStatusIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/analyze-scene': typeof ApiAnalyzeSceneRoute
+  '/api/build-sequence': typeof ApiBuildSequenceRoute
+  '/api/edit-image': typeof ApiEditImageRoute
+  '/api/generate-image': typeof ApiGenerateImageRoute
+  '/api/generate-video': typeof ApiGenerateVideoRoute
+  '/api/revise-design': typeof ApiReviseDesignRoute
+  '/api/video-file/$id': typeof ApiVideoFileIdRoute
+  '/api/video-status/$id': typeof ApiVideoStatusIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/analyze-scene': typeof ApiAnalyzeSceneRoute
+  '/api/build-sequence': typeof ApiBuildSequenceRoute
+  '/api/edit-image': typeof ApiEditImageRoute
+  '/api/generate-image': typeof ApiGenerateImageRoute
+  '/api/generate-video': typeof ApiGenerateVideoRoute
+  '/api/revise-design': typeof ApiReviseDesignRoute
+  '/api/video-file/$id': typeof ApiVideoFileIdRoute
+  '/api/video-status/$id': typeof ApiVideoStatusIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/analyze-scene'
+    | '/api/build-sequence'
+    | '/api/edit-image'
+    | '/api/generate-image'
+    | '/api/generate-video'
+    | '/api/revise-design'
+    | '/api/video-file/$id'
+    | '/api/video-status/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/analyze-scene'
+    | '/api/build-sequence'
+    | '/api/edit-image'
+    | '/api/generate-image'
+    | '/api/generate-video'
+    | '/api/revise-design'
+    | '/api/video-file/$id'
+    | '/api/video-status/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/analyze-scene'
+    | '/api/build-sequence'
+    | '/api/edit-image'
+    | '/api/generate-image'
+    | '/api/generate-video'
+    | '/api/revise-design'
+    | '/api/video-file/$id'
+    | '/api/video-status/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiAnalyzeSceneRoute: typeof ApiAnalyzeSceneRoute
+  ApiBuildSequenceRoute: typeof ApiBuildSequenceRoute
+  ApiEditImageRoute: typeof ApiEditImageRoute
+  ApiGenerateImageRoute: typeof ApiGenerateImageRoute
+  ApiGenerateVideoRoute: typeof ApiGenerateVideoRoute
+  ApiReviseDesignRoute: typeof ApiReviseDesignRoute
+  ApiVideoFileIdRoute: typeof ApiVideoFileIdRoute
+  ApiVideoStatusIdRoute: typeof ApiVideoStatusIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +156,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/analyze-scene': {
+      id: '/api/analyze-scene'
+      path: '/api/analyze-scene'
+      fullPath: '/api/analyze-scene'
+      preLoaderRoute: typeof ApiAnalyzeSceneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/build-sequence': {
+      id: '/api/build-sequence'
+      path: '/api/build-sequence'
+      fullPath: '/api/build-sequence'
+      preLoaderRoute: typeof ApiBuildSequenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/edit-image': {
+      id: '/api/edit-image'
+      path: '/api/edit-image'
+      fullPath: '/api/edit-image'
+      preLoaderRoute: typeof ApiEditImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-image': {
+      id: '/api/generate-image'
+      path: '/api/generate-image'
+      fullPath: '/api/generate-image'
+      preLoaderRoute: typeof ApiGenerateImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-video': {
+      id: '/api/generate-video'
+      path: '/api/generate-video'
+      fullPath: '/api/generate-video'
+      preLoaderRoute: typeof ApiGenerateVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/revise-design': {
+      id: '/api/revise-design'
+      path: '/api/revise-design'
+      fullPath: '/api/revise-design'
+      preLoaderRoute: typeof ApiReviseDesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/video-file/$id': {
+      id: '/api/video-file/$id'
+      path: '/api/video-file/$id'
+      fullPath: '/api/video-file/$id'
+      preLoaderRoute: typeof ApiVideoFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/video-status/$id': {
+      id: '/api/video-status/$id'
+      path: '/api/video-status/$id'
+      fullPath: '/api/video-status/$id'
+      preLoaderRoute: typeof ApiVideoStatusIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiAnalyzeSceneRoute: ApiAnalyzeSceneRoute,
+  ApiBuildSequenceRoute: ApiBuildSequenceRoute,
+  ApiEditImageRoute: ApiEditImageRoute,
+  ApiGenerateImageRoute: ApiGenerateImageRoute,
+  ApiGenerateVideoRoute: ApiGenerateVideoRoute,
+  ApiReviseDesignRoute: ApiReviseDesignRoute,
+  ApiVideoFileIdRoute: ApiVideoFileIdRoute,
+  ApiVideoStatusIdRoute: ApiVideoStatusIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

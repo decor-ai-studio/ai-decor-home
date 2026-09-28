@@ -9,10 +9,11 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+// المساعد الشخصي (رواق) معطّل مؤقتًا — لإعادة تفعيله: أعد هذا الاستيراد وضع ASSISTANT_ENABLED = true
+// import RawaqAssistant from "@/components/RawaqAssistant";
+const ASSISTANT_ENABLED = false;
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { registerPwa } from "../lib/pwa-register";
-import { InstallBanner } from "@/components/InstallBanner";
 
 function NotFoundComponent() {
   return (
@@ -79,23 +80,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ديكور AI" },
-      { name: "description", content: "صمّم ديكور منزلك بالذكاء الاصطناعي" },
-      { name: "theme-color", content: "#a33a1f" },
-      { property: "og:title", content: "ديكور AI" },
-      { property: "og:description", content: "صمّم ديكور منزلك بالذكاء الاصطناعي" },
+      { title: "Glow Tech AI Studio — تصميم الواجهات والديكور بالذكاء الاصطناعي" },
+      {
+        name: "description",
+        content:
+          "منصة Glow Tech لتصميم واجهات المحال، الكلادنج، الحروف المضيئة، وتجديد المنازل مع حساب التكاليف التقديرية.",
+      },
+      { name: "author", content: "Glow Tech" },
+      { property: "og:title", content: "Glow Tech AI Studio" },
+      {
+        property: "og:description",
+        content: "تصميم الواجهات والديكور وحساب التكاليف بالذكاء الاصطناعي.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "manifest", href: "/manifest.json" },
-      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -106,7 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -120,15 +131,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useEffect(() => {
-    registerPwa();
-  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <InstallBanner />
     </QueryClientProvider>
   );
 }
